@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L&S Mobile Dashboard
 // @namespace    ls-mobile-dashboard
-// @version      1.1.0
+// @version      1.1.2
 // @description  Mobile Kursübersicht mit L&S-Daten (Tagesveränderung, Auto-Refresh) + VIX-Fremdquelle
 // @author       Tobias Melcher
 // @homepage     https://github.com/tobiasmelcher/ls-mobile-dashboard
@@ -31,6 +31,26 @@
   var VIX_ENTRY = { id: 'VIX', name: 'VIX Volatilitätsindex', isin: '^VIX', currency: 'Pkte', source: 'feargreedchart.com' };
 
   function isVixId(id) { return String(id).toUpperCase() === 'VIX'; }
+
+  // Kuratierte Anzeigenamen für L&S-Kürzel (Suche liefert z. B. "B.E.-EQ.PRE.IN. U.ETFEOA").
+  // Greift beim Hinzufügen UND beim Laden (Bestandslisten), keyed nach ID und ISIN.
+  var FRIENDLY_NAMES = {
+    '4883494': 'BNP Equity Premium Income (ETF)',
+    'LU3307219520': 'BNP Equity Premium Income (ETF)',
+    '1045625': 'FTSE All-World (ETF)',
+    'IE00BK5BQT80': 'FTSE All-World (ETF)',
+    '46331': 'Euro Stoxx 50 (ETF)',
+    'DE000ETFL029': 'Euro Stoxx 50 (ETF)'
+  };
+
+  function friendlyName(h) {
+    if (!h) return '';
+    var byId = FRIENDLY_NAMES[String(h.id)];
+    if (byId) return byId;
+    var byIsin = h.isin && FRIENDLY_NAMES[String(h.isin).toUpperCase()];
+    if (byIsin) return byIsin;
+    return h.displayname;
+  }
 
   // Benannte Konstanten für wiederkehrende Werte
   var TRADING_DAYS_PER_YEAR = 252;  // ~252 Börsentage für rollierende Fenster
@@ -76,10 +96,14 @@
         if (Array.isArray(arr) && arr.length) {
           // Kuratierte Namen aus DEFAULT_WATCHLIST auf gespeicherte Einträge anwenden,
           // falls der Nutzer ein Default-Instrument per Suche (mit API-Rohname) hinzugefügt hat.
+          // FRIENDLY_NAMES zusätzlich für Nicht-Defaults (z. B. BNP-ETF per WKN).
           var nameMap = {};
           DEFAULT_WATCHLIST.forEach(function (d) { nameMap[d.id] = d.name; });
           arr.forEach(function (w) {
             if (w && nameMap[String(w.id)]) w.name = nameMap[String(w.id)];
+            else if (w && (FRIENDLY_NAMES[String(w.id)] || (w.isin && FRIENDLY_NAMES[String(w.isin).toUpperCase()]))) {
+              w.name = FRIENDLY_NAMES[String(w.id)] || FRIENDLY_NAMES[String(w.isin).toUpperCase()];
+            }
           });
           // Einmal-Migration (v1.1.0): VIX an Bestandslisten anhängen.
           // Flag verhindert Re-Add nach bewusstem Entfernen.
@@ -954,23 +978,24 @@
         return;
       }
       hits.slice(0, 5).forEach(function (h) {
+        var shown = friendlyName(h);
         var row = document.createElement('div');
         row.setAttribute('style', 'display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid #eee;');
-        row.innerHTML = '<span style="flex:1;min-width:0;">' + escapeHtml(h.displayname) +
+        row.innerHTML = '<span style="flex:1;min-width:0;">' + escapeHtml(shown) +
           ' <small>(' + escapeHtml(h.isin || '') + ' / ' + escapeHtml(String(h.wkn || '')) + ')</small></span>';
         var add = document.createElement('button');
         add.textContent = '+ Hinzufügen';
         add.setAttribute('style', 'min-height:44px;padding:10px 12px;font-size:15px;flex:0 0 auto;border-radius:10px;cursor:pointer;');
         add.addEventListener('click', function () {
           if (state.watchlist.some(function (w) { return String(w.id) === String(h.id); })) {
-            toast('Bereits in der Liste: ' + h.displayname);
+            toast('Bereits in der Liste: ' + shown);
             return;
           }
           var cur = h.currency || (h.isin && h.isin.indexOf('LS000') === 0 ? 'USD' : 'EUR');
-          state.watchlist.push({ id: String(h.id), name: h.displayname, isin: h.isin, currency: cur });
+          state.watchlist.push({ id: String(h.id), name: shown, isin: h.isin, currency: cur });
           saveWatchlist();
           el.hits.innerHTML = '';
-          toast('Hinzugefügt: ' + h.displayname);
+          toast('Hinzugefügt: ' + shown);
           refreshAll(true);
         });
         row.appendChild(add);
@@ -1020,7 +1045,8 @@
         smaSeries: smaSeries, detectCross: detectCross, refChange: refChange,
         gapStats: gapStats, rangePoints: rangePoints,
         vixHistoryFromCloses: vixHistoryFromCloses, deriveVixQuote: deriveVixQuote,
-        isVixId: isVixId, VIX_ENTRY: VIX_ENTRY
+        isVixId: isVixId, VIX_ENTRY: VIX_ENTRY, friendlyName: friendlyName,
+        FRIENDLY_NAMES: FRIENDLY_NAMES
       };
     }
   } catch (e) { /* kein module-System: ignorieren */ }

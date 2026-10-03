@@ -119,10 +119,15 @@ test('Gespeicherte Liste bleibt erhalten, Default-Namen werden kuratiert', async
   // Default-ID mit Rohname wird kuratiert ...
   assert.ok(cardsHtml.includes('MSCI Emerging Markets IMI'), 'kuratierter Default-Name fehlt');
   assert.ok(!cardsHtml.includes('EMIMI U.ETF'), 'API-Rohname muss ersetzt sein');
-  // ... alles andere bleibt, wie gespeichert
-  for (const n of ['FTSE All-World (ETF)', 'Euro Stoxx', 'B.E.-EQ.PRE.IN. U.ETFEOA', 'Nasdaq-100 (ETF)']) {
+  // ... alles andere bleibt, wie gespeichert (BNP per FRIENDLY_NAMES kuratiert)
+  for (const n of ['FTSE All-World (ETF)', 'Euro Stoxx', 'BNP Equity Premium Income', 'Nasdaq-100 (ETF)']) {
     assert.ok(cardsHtml.includes(n), 'gespeicherter Name fehlt: ' + n);
   }
+  assert.ok(!cardsHtml.includes('B.E.-EQ.PRE.IN. U.ETFEOA'), 'BNP-Rohname muss kuratiert sein');
+  assert.strictEqual(module.exports.__lsdb.friendlyName({ id: 4883494, isin: 'LU3307219520', displayname: 'B.E.-EQ.PRE.IN. U.ETFEOA' }), 'BNP Equity Premium Income (ETF)', 'friendlyName per ID');
+  assert.strictEqual(module.exports.__lsdb.friendlyName({ id: 999, isin: 'LU3307219520', displayname: 'x' }), 'BNP Equity Premium Income (ETF)', 'friendlyName per ISIN');
+  assert.strictEqual(module.exports.__lsdb.friendlyName({ id: 1045625, isin: 'IE00BK5BQT80', displayname: 'VANG.FTSE A.W. DLA' }), 'FTSE All-World (ETF)', 'friendlyName FTSE');
+  assert.strictEqual(module.exports.__lsdb.friendlyName({ id: 46331, isin: 'DE000ETFL029', displayname: 'DK EURO STOXX 50' }), 'Euro Stoxx 50 (ETF)', 'friendlyName Euro Stoxx');
   assert.ok(cardsHtml.includes('DE000A0F5UF5'), 'ISIN fehlt');
   assert.ok(cardsHtml.includes('<canvas'), 'Mini-Chart fehlt');
   assert.ok(cardsHtml.includes('lsdb-range'), 'Bereichs-Chip fehlt');
