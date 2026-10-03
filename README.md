@@ -41,7 +41,7 @@ Safari unterstützt seit iOS 15 Erweiterungen. Empfohlen: die kostenlose Open-So
 1. Aus dem App Store **Userscripts** installieren.
 2. **Einstellungen** → Apps → **Safari** → **Erweiterungen** → **Userscripts** aktivieren und Zugriff auf `ls-tc.de` erlauben („Immer erlauben“).
 3. Skript per Link installieren (empfohlen): In **Safari** diese URL öffnen:
-   `https://raw.githubusercontent.com/tobiasmelcher/ls-mobile-dashboard/main/ls-mobile-dashboard.user.js`
+   [ls-mobile-dashboard.user.js](https://raw.githubusercontent.com/tobiasmelcher/ls-mobile-dashboard/main/ls-mobile-dashboard.user.js)
    Danach das **Puzzleteil-Symbol** (Adressleiste) → **Userscripts** antippen → Installationsdialog bestätigen. Fertig — bei Updates den Link einfach erneut öffnen.
 4. **Safari** → `https://www.ls-tc.de/de/` öffnen, ggf. L&S-Disclaimer akzeptieren.
 5. Puzzleteil-Symbol → **Userscripts** → Skript ist aktiv → Button **L&S Dashboard** erscheint.
