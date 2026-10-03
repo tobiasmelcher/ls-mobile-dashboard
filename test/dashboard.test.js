@@ -61,9 +61,9 @@ test('Gespeicherte Liste bleibt erhalten, Default-Namen werden kuratiert', async
   panel.querySelector = (sel) => (panelFakes[sel] = panelFakes[sel] || fakeEl());
 
   global.localStorage = {
-    _s: JSON.stringify(OLD_LIST),
-    getItem(k) { return k === 'lsdb.watchlist.v1' ? this._s : null; },
-    setItem(k, v) { this._s = v; },
+    _store: { 'lsdb.watchlist.v1': JSON.stringify(OLD_LIST) },
+    getItem(k) { return this._store[k] != null ? this._store[k] : null; },
+    setItem(k, v) { this._store[k] = String(v); },
   };
   global.document = {
     body: { appendChild() {}, style: {} },
@@ -71,6 +71,11 @@ test('Gespeicherte Liste bleibt erhalten, Default-Namen werden kuratiert', async
     addEventListener() {}, visibilityState: 'visible',
   };
   global.fetch = (url) => {
+    if (String(url).indexOf('feargreedchart.com') !== -1) {
+      const closes = [];
+      for (let i = 0; i < 65; i++) closes.push(15 + (i % 5) * 0.2);
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({ market: { '^VIX': { price: 15.31, pct: -1.2, closes } } }) });
+    }
     const m = /instrumentId=(\d+)/.exec(url);
     if (m) fetchedIds.push(m[1]);
     const flat = m && m[1] === '70577';
@@ -102,13 +107,15 @@ test('Gespeicherte Liste bleibt erhalten, Default-Namen werden kuratiert', async
   eval(src); // eslint-disable-line
   await new Promise((r) => setTimeout(r, 500));
 
-  // Gespeicherte Liste (9 Einträge) wird unverändert abgefragt: kein Zwangsmigration
-  assert.strictEqual(new Set(fetchedIds).size, 9, 'erwartet 9 IDs, gesehen: ' + [...new Set(fetchedIds)]);
+  // Gespeicherte Liste (9 Einträge) bekommt VIX-Migration -> 10 Karten
+  assert.strictEqual(new Set(fetchedIds).size, 9, 'erwartet 9 L&S-IDs, gesehen: ' + [...new Set(fetchedIds)]);
   assert.ok(fetchedIds.includes('1045625'), 'gespeicherte FTSE-ID bleibt erhalten');
   assert.ok(fetchedIds.includes('46331'), 'gespeicherte Euro-Stoxx-ID bleibt erhalten');
 
   const cardsHtml = panelFakes['#lsdb-cards'].children.map(serialize).join('\n');
-  assert.strictEqual(panelFakes['#lsdb-cards'].children.length, 9, 'erwartet 9 Karten');
+  assert.strictEqual(panelFakes['#lsdb-cards'].children.length, 10, 'erwartet 9 + VIX-Migration = 10 Karten');
+  assert.ok(cardsHtml.includes('VIX'), 'VIX-Karte fehlt nach Migration');
+  assert.ok(cardsHtml.includes('Fremdquelle'), 'VIX muss als Fremdquelle gekennzeichnet sein');
   // Default-ID mit Rohname wird kuratiert ...
   assert.ok(cardsHtml.includes('MSCI Emerging Markets IMI'), 'kuratierter Default-Name fehlt');
   assert.ok(!cardsHtml.includes('EMIMI U.ETF'), 'API-Rohname muss ersetzt sein');

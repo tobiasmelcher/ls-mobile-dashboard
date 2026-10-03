@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         L&S Mobile Dashboard
 // @namespace    ls-mobile-dashboard
-// @version      1.0.1
-// @description  Mobile Kursübersicht mit L&S-Daten (Tagesveränderung, Auto-Refresh)
+// @version      1.1.0
+// @description  Mobile Kursübersicht mit L&S-Daten (Tagesveränderung, Auto-Refresh) + VIX-Fremdquelle
 // @author       Tobias Melcher
 // @homepage     https://github.com/tobiasmelcher/ls-mobile-dashboard
 // @supportURL   https://github.com/tobiasmelcher/ls-mobile-dashboard/issues
@@ -20,6 +20,17 @@
   var API = 'https://www.ls-tc.de';
   var REFRESH_MS = 20000;
   var MAX_BACKOFF_MS = 300000;
+
+  // VIX als einzige Fremdquelle (CORS-frei): Yahoo/CNN senden kein
+  // Access-Control-Allow-Origin und sind per plain fetch() von ls-tc.de aus
+  // blockiert. feargreedchart.com sendet `ACAO: *` und liefert
+  // market['^VIX'] = { price, chg, pct, closes[~65 Tageswerte] }.
+  var VIX_URL = 'https://feargreedchart.com/api/?action=all';
+  var VIX_TTL_MS = 300000; // 5 min Cache: 1 schwere Antwort (~1 MB Historie) pro Runde vermeiden
+  var vixCache = { at: 0, data: null };
+  var VIX_ENTRY = { id: 'VIX', name: 'VIX Volatilitätsindex', isin: '^VIX', currency: 'Pkte', source: 'feargreedchart.com' };
+
+  function isVixId(id) { return String(id).toUpperCase() === 'VIX'; }
 
   // Benannte Konstanten für wiederkehrende Werte
   var TRADING_DAYS_PER_YEAR = 252;  // ~252 Börsentage für rollierende Fenster
@@ -42,7 +53,8 @@
     { id: '49598', name: 'MSCI Emerging Markets IMI', isin: 'IE00BKM4GZ66', currency: 'EUR' },
     { id: '70586', name: 'Gold (Spot)', isin: 'LS000IGOLD01', currency: 'USD' },
     { id: '70577', name: 'Brent Öl (Spot)', isin: 'LS000IOIL003', currency: 'USD' },
-    { id: '3477757', name: 'Bitcoin (BTC)', isin: 'LS000LSOBTC1', currency: 'USD' }
+    { id: '3477757', name: 'Bitcoin (BTC)', isin: 'LS000LSOBTC1', currency: 'USD' },
+    { id: 'VIX', name: 'VIX Volatilitätsindex', isin: '^VIX', currency: 'Pkte', source: 'feargreedchart.com' }
   ];
 
   var state = {
@@ -69,10 +81,22 @@
           arr.forEach(function (w) {
             if (w && nameMap[String(w.id)]) w.name = nameMap[String(w.id)];
           });
+          // Einmal-Migration (v1.1.0): VIX an Bestandslisten anhängen.
+          // Flag verhindert Re-Add nach bewusstem Entfernen.
+          var migrated = false;
+          try { migrated = localStorage.getItem('lsdb.vix-migrated.v1') === '1'; } catch (e2) {}
+          if (!migrated && !arr.some(function (w) { return w && isVixId(w.id); })) {
+            arr.push({ id: VIX_ENTRY.id, name: VIX_ENTRY.name, isin: VIX_ENTRY.isin, currency: VIX_ENTRY.currency, source: VIX_ENTRY.source });
+          }
+          try {
+            localStorage.setItem('lsdb.vix-migrated.v1', '1');
+            localStorage.setItem('lsdb.watchlist.v1', JSON.stringify(arr));
+          } catch (e3) { /* Speicher blockiert: nur in-memory weiter */ }
           return arr;
         }
       }
     } catch (e) { /* Fallback auf Defaults */ }
+    try { localStorage.setItem('lsdb.vix-migrated.v1', '1'); } catch (e4) {}
     return DEFAULT_WATCHLIST.slice();
   }
 
@@ -135,6 +159,68 @@
       '?container=lsdb_chart&instrumentId=' + encodeURIComponent(instrumentId) +
       '&marketId=1&quotetype=mid&series=intraday,history&type=&localeId=de';
     return fetchJSON(url);
+  }
+
+  // VIX-Fremdquelle (einzige Ausnahme zur L&S-only-Regel, CORS-frei mit ACAO:*).
+  // Antwort enthält u. a. market['^VIX'] = { price, pct, closes[] }.
+  function fetchVixMarket() {
+    var now = Date.now();
+    if (vixCache.data && (now - vixCache.at) < VIX_TTL_MS) {
+      return Promise.resolve(vixCache.data);
+    }
+    var ctrl = new AbortController();
+    var t = setTimeout(function () { ctrl.abort(); }, 10000);
+    return fetch(VIX_URL, { signal: ctrl.signal, credentials: 'omit', mode: 'cors' })
+      .then(function (res) {
+        clearTimeout(t);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function (json) {
+        clearTimeout(t);
+        vixCache = { at: Date.now(), data: json };
+        return json;
+      })
+      .catch(function (err) {
+        clearTimeout(t);
+        throw err;
+      });
+  }
+
+  // Baut aus den Tages-Schlüssen eine [ms, preis]-Reihe (Kalendertage,
+  // heute = letzter Wert), damit refChange/signals/SMA/Charts unverändert laufen.
+  function vixHistoryFromCloses(closes) {
+    var clean = (closes || []).filter(function (v) { return typeof v === 'number' && isFinite(v); });
+    var n = clean.length;
+    var today = new Date();
+    today.setHours(12, 0, 0, 0);
+    var base = today.getTime();
+    return clean.map(function (v, i) { return [base - (n - 1 - i) * 86400000, v]; });
+  }
+
+  function deriveVixQuote(entry, fgJson) {
+    var m = fgJson && fgJson.market && fgJson.market['^VIX'];
+    if (!m || typeof m.price !== 'number') throw new Error('keine VIX-Daten');
+    var closes = Array.isArray(m.closes) && m.closes.length ? m.closes : [m.price];
+    var hist = vixHistoryFromCloses(closes);
+    var price = m.price;
+    var prevClose = closes.length > 1 ? closes[closes.length - 2] : null;
+    var chgPct = (typeof m.pct === 'number') ? m.pct
+      : (prevClose ? (price / prevClose - 1) * 100 : null);
+    var lastTime = hist.length ? hist[hist.length - 1][0] : Date.now();
+    var perf = {
+      m1: refChange(hist, price, lastTime, 30),
+      m3: refChange(hist, price, lastTime, 90),
+      m6: refChange(hist, price, lastTime, 180),
+      y1: refChange(hist, price, lastTime, 365)
+    };
+    return {
+      id: entry.id, name: entry.name, currency: entry.currency, price: price,
+      time: new Date(), prevClose: prevClose, chgPct: chgPct, perf: perf,
+      signals: signals(hist),
+      smas: { sma50: gapStats(hist, price, 50), sma200: gapStats(hist, price, 200) },
+      cross: detectCross(hist), closed: false, external: true, error: null
+    };
   }
 
   // Änderung gegenüber einem früheren Zeitpunkt aus der History-Reihe.
@@ -296,6 +382,19 @@
     if (state.busy || document.visibilityState !== 'visible') return;
     state.busy = true;
     var jobs = state.watchlist.map(function (entry) {
+      if (isVixId(entry.id)) {
+        return fetchVixMarket()
+          .then(function (fg) {
+            state.quotes[entry.id] = deriveVixQuote(entry, fg);
+            state.history[entry.id] = vixHistoryFromCloses(
+              (fg.market['^VIX'] || {}).closes || []);
+            return true;
+          })
+          .catch(function (err) {
+            state.quotes[entry.id] = { id: entry.id, name: entry.name, currency: entry.currency, price: null, time: null, prevClose: null, chgPct: null, perf: { m1: null, m3: null, m6: null, y1: null }, signals: null, cross: null, external: true, error: String(err && err.message || err) };
+            return false;
+          });
+      }
       return getHistory(entry.id)
         .then(function (chart) {
           state.quotes[entry.id] = deriveQuote(entry, chart);
@@ -782,7 +881,8 @@
         y1Chip +
         '<span style="position:absolute;top:4px;right:6px;font-size:14px;color:#777;">⛶</span></div>' +
         '<div style="display:flex;justify-content:space-between;gap:8px;margin-top:4px;font-size:13px;color:#555;">' +
-        '<span>' + escapeHtml(entry.isin || '') + (q.prevClose ? ' · Vortag ' + fmt(q.prevClose, 2) : '') + '</span>' +
+        '<span>' + escapeHtml(entry.isin || '') + (q.prevClose ? ' · Vortag ' + fmt(q.prevClose, 2) : '') +
+        ((isVixId(entry.id) || q.external) ? ' · Fremdquelle: feargreedchart.com' : '') + '</span>' +
         '<span>' + escapeHtml(age.label) + '</span></div>';
       var rm = document.createElement('button');
       rm.textContent = 'Entfernen';
@@ -829,8 +929,28 @@
     el.hits.textContent = 'Suche …';
     getInstrument(query).then(function (hits) {
       el.hits.innerHTML = '';
+      // VIX gibt es bei L&S nicht (Suche liefert []): als Fremdquelle anbieten.
+      if (/vix/i.test(query) && !state.watchlist.some(function (w) { return isVixId(w.id); })) {
+        var vrow = document.createElement('div');
+        vrow.setAttribute('style', 'display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid #eee;');
+        vrow.innerHTML = '<span style="flex:1;min-width:0;">VIX Volatilitätsindex <small>(^VIX / Fremdquelle: feargreedchart.com)</small></span>';
+        var vadd = document.createElement('button');
+        vadd.textContent = '+ Hinzufügen';
+        vadd.setAttribute('style', 'min-height:44px;padding:10px 12px;font-size:15px;flex:0 0 auto;border-radius:10px;cursor:pointer;');
+        vadd.addEventListener('click', function () {
+          state.watchlist.push({ id: VIX_ENTRY.id, name: VIX_ENTRY.name, isin: VIX_ENTRY.isin, currency: VIX_ENTRY.currency, source: VIX_ENTRY.source });
+          saveWatchlist();
+          el.hits.innerHTML = '';
+          toast('Hinzugefügt: VIX Volatilitätsindex');
+          refreshAll(true);
+        });
+        vrow.appendChild(vadd);
+        el.hits.appendChild(vrow);
+      }
       if (!hits.length) {
-        el.hits.textContent = 'Nichts gefunden für „' + query + '“.';
+        if (!el.hits.children || !el.hits.children.length) {
+          el.hits.textContent = 'Nichts gefunden für „' + query + '“.';
+        }
         return;
       }
       hits.slice(0, 5).forEach(function (h) {
@@ -898,7 +1018,9 @@
       module.exports.__lsdb = {
         signals: signals, rsiSimple: rsiSimple, smaVals: smaVals,
         smaSeries: smaSeries, detectCross: detectCross, refChange: refChange,
-        gapStats: gapStats, rangePoints: rangePoints
+        gapStats: gapStats, rangePoints: rangePoints,
+        vixHistoryFromCloses: vixHistoryFromCloses, deriveVixQuote: deriveVixQuote,
+        isVixId: isVixId, VIX_ENTRY: VIX_ENTRY
       };
     }
   } catch (e) { /* kein module-System: ignorieren */ }
