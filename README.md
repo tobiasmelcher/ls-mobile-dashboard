@@ -2,6 +2,8 @@
 
 Mobiles Kurs-Dashboard als Userscript (Tampermonkey) für [Lang & Schwarz](https://www.ls-tc.de) — Tagesveränderungen, 1M/3M/6M/1J-Performance, Mini- und Fullscreen-Charts, technische Signale (RSI, SMA-Abstand, Golden/Death Cross), Suche nach ISIN/WKN/Name, Auto-Refresh. Nur L&S-Daten, keine Fremdquellen, keine Tracker.
 
+![L&S Dashboard](docs/screenshot.png)
+
 ## Installation (Edge/Chrome)
 
 1. Tampermonkey (stable) installieren: [Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaejmhjcdnkimaiianpabooaeo) bzw. [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). In Edge zusätzlich „Benutzerskripts zulassen“ aktivieren (`edge://extensions/` → Details).
