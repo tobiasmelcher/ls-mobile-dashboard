@@ -10,8 +10,45 @@ Mobiles Kurs-Dashboard als Userscript (Tampermonkey) für [Lang & Schwarz](https
 
 ## Mobilgeräte
 
-- **Android:** [docs/installation-android.md](docs/installation-android.md) (Firefox + Tampermonkey; Chrome Android kann keine Erweiterungen).
-- **iOS:** [docs/installation-ios.md](docs/installation-ios.md) (Safari-Erweiterung „Userscripts“, kostenlos).
+### Android
+
+Chrome für Android unterstützt **keine** Erweiterungen — daher Firefox (oder einen Chromium-Fork mit Erweiterungs-Support) verwenden.
+
+**Variante A (empfohlen): Firefox + Tampermonkey**
+
+1. **Firefox für Android** aus dem Play Store installieren.
+2. Menü (⋮) → **Add-ons** → **Add-ons entdecken** → nach **Tampermonkey** suchen → installieren.
+3. Tampermonkey-Symbol → **Dashboard** → **+** (neues Skript).
+4. Kompletten Inhalt von `ls-mobile-dashboard.user.js` einfügen → speichern (Disketten-Symbol), aktiviert lassen.
+5. `https://www.ls-tc.de/de/` öffnen, ggf. L&S-Disclaimer akzeptieren → Button **L&S Dashboard**.
+
+**Variante B: Kiwi Browser + Tampermonkey**
+
+1. **Kiwi Browser** installieren (Chromium mit Erweiterungs-Support).
+2. `chrome.google.com/webstore` öffnen → **Tampermonkey** installieren.
+3. Weiter wie ab Schritt 3 oben.
+
+**Hinweise Android**
+
+- Das Dashboard ist als Fullscreen-Overlay fürs Smartphone optimiert.
+- Android pausiert Browser-Tabs im Hintergrund teils aggressiv (Stromsparmodus) → nach Rückkehr lädt das Skript automatisch einmal neu.
+- Abruftakt Standard 20 s; bei vielen Werten mobile Daten beachten.
+
+### iOS (iPhone/iPad)
+
+Safari unterstützt seit iOS 15 Erweiterungen. Empfohlen: die kostenlose Open-Source-App **Userscripts** (Alternative: Tampermonkey für Safari).
+
+1. Aus dem App Store **Userscripts** installieren.
+2. **Einstellungen** → Apps → **Safari** → **Erweiterungen** → **Userscripts** aktivieren und Zugriff auf `ls-tc.de` erlauben („Immer erlauben“).
+3. **Userscripts-App** öffnen → **+** → kompletten Inhalt von `ls-mobile-dashboard.user.js` einfügen → speichern, Skript aktiviert lassen.
+4. **Safari** → `https://www.ls-tc.de/de/` öffnen, ggf. L&S-Disclaimer akzeptieren.
+5. Puzzleteil-Symbol (Adressleiste) → **Userscripts** → Skript ist aktiv → Button **L&S Dashboard** erscheint.
+
+**Hinweise iOS**
+
+- iOS pausiert Hintergrund-Tabs: **kein** Hintergrund-Refresh möglich. Nach Rückkehr in den Vordergrund lädt das Dashboard automatisch neu.
+- Bei Problemen: Einstellungen → Safari → Erweiterungen prüfen, Seite neu laden.
+- Tippfehler beim Einfügen vermeiden: Datei am PC öffnen und z. B. per iCloud/Notizen aufs iPhone übertragen.
 
 ## Entwicklung & Test (Windows)
 
