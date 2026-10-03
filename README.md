@@ -1,6 +1,6 @@
 # L&S Mobile Dashboard
 
-Mobiles Kurs-Dashboard als Userscript (Tampermonkey) für [Lang & Schwarz](https://www.ls-tc.de) — Tagesveränderungen, 1M/3M/6M/1J-Performance, Mini- und Fullscreen-Charts, technische Signale (RSI, SMA-Abstand, Golden/Death Cross), Suche nach ISIN/WKN/Name, Auto-Refresh. Nur L&S-Daten, keine Fremdquellen, keine Tracker.
+Mobiles Kurs-Dashboard als Userscript (Tampermonkey) für [Lang & Schwarz](https://www.ls-tc.de) — Tagesveränderungen, 1M/3M/6M/1J-Performance, Mini- und Fullscreen-Charts, technische Signale (RSI, SMA-Abstand, Golden/Death Cross), Suche nach ISIN/WKN/Name, Auto-Refresh. Kurse von L&S, dazu VIX-Volatilitätsindex als einzige Fremdquelle ([feargreedchart.com](https://feargreedchart.com), CORS-frei, 5-min-Cache, in der Karte als „Fremdquelle“ gekennzeichnet), keine Tracker.
 
 ![L&S Dashboard](docs/screenshot.png)
 
@@ -67,4 +67,4 @@ Details: `plan.md`, Datenquellen: `docs/data-sources.md`.
 
 ## Hinweis
 
-Informationsanzeige, **keine Anlageberatung**, keine Orderausführung. Kurse können von verbindlichen Handelskursen abweichen. Abrufrate bitte moderat halten (Standard: 20 s).
+Informationsanzeige, **keine Anlageberatung**, keine Orderausführung. Kurse können von verbindlichen Handelskursen abweichen. Abrufrate bitte moderat halten (Standard: 20 s). VIX-Daten werden von feargreedchart.com geladen (Tageswerte, ca. 65 Tage Historie für Mini-/Fullscreen-Chart) und sind als Fremdquelle gekennzeichnet.
