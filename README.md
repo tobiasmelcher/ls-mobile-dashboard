@@ -4,9 +4,9 @@ Mobiles Kurs-Dashboard als Userscript (Tampermonkey) für [Lang & Schwarz](https
 
 ## Installation (Edge/Chrome)
 
-1. Tampermonkey (stable) aus dem Browser-Add-on-Store installieren, in Edge zusätzlich „Benutzerskripts zulassen“ aktivieren (`edge://extensions/` → Details).
-2. Neues Userscript erstellen, Inhalt von `ls-mobile-dashboard.user.js` einfügen, speichern.
-3. `https://www.ls-tc.de/de/` öffnen (ggf. L&S-Disclaimer akzeptieren) → Button **L&S Dashboard**.
+1. Tampermonkey (stable) installieren: [Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaejmhjcdnkimaiianpabooaeo) bzw. [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo). In Edge zusätzlich „Benutzerskripts zulassen“ aktivieren (`edge://extensions/` → Details).
+2. Neues Userscript erstellen, Inhalt von [ls-mobile-dashboard.user.js](https://raw.githubusercontent.com/tobiasmelcher/ls-mobile-dashboard/main/ls-mobile-dashboard.user.js) einfügen, speichern.
+3. [https://www.ls-tc.de/de/](https://www.ls-tc.de/de/) öffnen (ggf. L&S-Disclaimer akzeptieren) → Button **L&S Dashboard**.
 
 ## Mobilgeräte
 
