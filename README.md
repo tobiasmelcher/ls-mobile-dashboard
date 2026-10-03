@@ -8,6 +8,11 @@ Mobiles Kurs-Dashboard als Userscript (Tampermonkey) für [Lang & Schwarz](https
 2. Neues Userscript erstellen, Inhalt von `ls-mobile-dashboard.user.js` einfügen, speichern.
 3. `https://www.ls-tc.de/de/` öffnen (ggf. L&S-Disclaimer akzeptieren) → Button **L&S Dashboard**.
 
+## Mobilgeräte
+
+- **Android:** [docs/installation-android.md](docs/installation-android.md) (Firefox + Tampermonkey; Chrome Android kann keine Erweiterungen).
+- **iOS:** [docs/installation-ios.md](docs/installation-ios.md) (Safari-Erweiterung „Userscripts“, kostenlos).
+
 ## Entwicklung & Test (Windows)
 
 ```powershell
