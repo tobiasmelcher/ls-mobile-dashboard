@@ -46,7 +46,7 @@ const OLD_LIST = [
   { id: '49598', name: 'IS C.MSCI EMIMI U.ETF DLA', isin: 'IE00BKM4GZ66', currency: 'EUR' },
 ];
 
-test('Migration: alte Liste -> MSCI World, Euro Stoxx raus, neue Namen + Einträge', async () => {
+test('Gespeicherte Liste bleibt erhalten, Default-Namen werden kuratiert', async () => {
   // Scheduler-Timer (20 s) entrefen, damit der Runner danach sauber beendet;
   // kurze Timer (z. B. die 500-ms-Wartezeit) bleiben referenziert.
   const realSetTimeout = global.setTimeout;
@@ -96,26 +96,27 @@ test('Migration: alte Liste -> MSCI World, Euro Stoxx raus, neue Namen + Einträ
       },
     };
   }
-  global.__queryAllHook = () => [makeCanvas('44039')];
+  global.__queryAllHook = () => [makeCanvas('42380')];
 
   const src = fs.readFileSync(path.join(__dirname, '..', 'ls-mobile-dashboard.user.js'), 'utf8');
   eval(src); // eslint-disable-line
   await new Promise((r) => setTimeout(r, 500));
 
-  // 12 Instrumente abgefragt: 1045625 ersetzt, 46331 entfernt, 6 neue dazu
-  assert.strictEqual(new Set(fetchedIds).size, 12, 'erwartet 12 IDs, gesehen: ' + [...new Set(fetchedIds)]);
-  assert.ok(!fetchedIds.includes('1045625'), 'FTSE-ID darf nicht mehr abgefragt werden');
-  assert.ok(!fetchedIds.includes('46331'), 'Euro-Stoxx-ID darf nicht mehr abgefragt werden');
+  // Gespeicherte Liste (9 Einträge) wird unverändert abgefragt: kein Zwangsmigration
+  assert.strictEqual(new Set(fetchedIds).size, 9, 'erwartet 9 IDs, gesehen: ' + [...new Set(fetchedIds)]);
+  assert.ok(fetchedIds.includes('1045625'), 'gespeicherte FTSE-ID bleibt erhalten');
+  assert.ok(fetchedIds.includes('46331'), 'gespeicherte Euro-Stoxx-ID bleibt erhalten');
 
   const cardsHtml = panelFakes['#lsdb-cards'].children.map(serialize).join('\n');
-  assert.strictEqual(panelFakes['#lsdb-cards'].children.length, 12, 'erwartet 12 Karten');
-  for (const n of ['MSCI World (ETF)', 'BNP Equity Premium Income', 'MSCI Emerging Markets IMI', 'KRC Cat Bond', 'VanEck Dividenden Welt', 'SAP SE', 'BIT Global Internet Leaders']) {
-    assert.ok(cardsHtml.includes(n), 'Name fehlt: ' + n);
+  assert.strictEqual(panelFakes['#lsdb-cards'].children.length, 9, 'erwartet 9 Karten');
+  // Default-ID mit Rohname wird kuratiert ...
+  assert.ok(cardsHtml.includes('MSCI Emerging Markets IMI'), 'kuratierter Default-Name fehlt');
+  assert.ok(!cardsHtml.includes('EMIMI U.ETF'), 'API-Rohname muss ersetzt sein');
+  // ... alles andere bleibt, wie gespeichert
+  for (const n of ['FTSE All-World (ETF)', 'Euro Stoxx', 'B.E.-EQ.PRE.IN. U.ETFEOA', 'Nasdaq-100 (ETF)']) {
+    assert.ok(cardsHtml.includes(n), 'gespeicherter Name fehlt: ' + n);
   }
-  for (const ugly of ['U.ETFEOA', 'EMIMI U.ETF', 'CAT BD', 'MSTR.DM', 'Euro Stoxx']) {
-    assert.ok(!cardsHtml.includes(ugly), 'hässlicher Name noch da: ' + ugly);
-  }
-  assert.ok(cardsHtml.includes('IE00B4L5Y983'), 'ISIN fehlt');
+  assert.ok(cardsHtml.includes('DE000A0F5UF5'), 'ISIN fehlt');
   assert.ok(cardsHtml.includes('<canvas'), 'Mini-Chart fehlt');
   assert.ok(cardsHtml.includes('lsdb-range'), 'Bereichs-Chip fehlt');
   assert.ok(/3M [+-]/.test(cardsHtml), 'Chip muss Default-Bereich 3M zeigen');

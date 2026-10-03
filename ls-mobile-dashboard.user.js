@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L&S Mobile Dashboard
 // @namespace    ls-mobile-dashboard
-// @version      1.0.0
+// @version      1.0.1
 // @description  Mobile Kursübersicht mit L&S-Daten (Tagesveränderung, Auto-Refresh)
 // @author       Tobias Melcher
 // @homepage     https://github.com/tobiasmelcher/ls-mobile-dashboard
@@ -344,13 +344,15 @@
     var btn = document.createElement('button');
     btn.id = 'lsdb-toggle';
     btn.textContent = 'L&S Dashboard';
-    btn.setAttribute('style', css() + 'position:fixed;top:max(12px,env(safe-area-inset-top,12px));right:10px;z-index:' + Z_TOGGLE + ';padding:10px 14px;font-size:15px;font-weight:700;background:#0a0030;color:#fff;border:0;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.35);cursor:pointer;');
+    btn.setAttribute('style', css() + 'position:fixed;bottom:max(16px,env(safe-area-inset-bottom,16px));right:16px;z-index:' + Z_TOGGLE + ';display:none;padding:12px 16px;font-size:15px;font-weight:700;background:#0a0030;color:#fff;border:0;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.35);cursor:pointer;');
     btn.addEventListener('click', function () {
-      state.panelOpen = !state.panelOpen;
-      el.panel.style.display = state.panelOpen ? 'flex' : 'none';
-      try { document.body.style.overflow = state.panelOpen ? 'hidden' : ''; } catch (e) {}
+      state.panelOpen = true;
+      el.panel.style.display = 'flex';
+      btn.style.display = 'none';
+      try { document.body.style.overflow = 'hidden'; } catch (e) {}
     });
     document.body.appendChild(btn);
+    el.toggle = btn;
 
     var panel = document.createElement('div');
     panel.id = 'lsdb-panel';
@@ -417,6 +419,7 @@
       closeBtn.addEventListener('click', function () {
         state.panelOpen = false;
         el.panel.style.display = 'none';
+        if (el.toggle) el.toggle.style.display = 'block';
         try { document.body.style.overflow = ''; } catch (e) {}
       });
     }

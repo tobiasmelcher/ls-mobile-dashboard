@@ -34,9 +34,9 @@ Vorgeschlagene Default-Liste (10–12 Einträge, in dieser Reihenfolge):
 
 Nicht in Default, aber als nächste Kandidaten per Suche hinzufügbar: Dow Jones, Russell 2000, MSCI Emerging Markets / FTSE All-World, Stoxx 600, Hang Seng, Silber, Kupfer, US-Dollar-Index, Bund-Rendite.
 
-### Tatsächliche Startliste (v0.5.0, nutzerdefiniert)
+### Tatsächliche Startliste (v1.0, Review-Stand)
 
-Vom Vorschlag abweichend, per Suche verifiziert und mit Migration für bestehende Installationen umgesetzt (IDs in Klammern): MSCI World ETF (`44039`, IE00B4L5Y983), Nasdaq-100 ETF (`42380`), Nikkei-225 ETF (`54395`), Gold-Spot (`70586`), Brent-Spot (`70577`), Bitcoin (`3477757`), SAP (`34313`, Aktie), BIT Global Internet Leaders Fonds (`1426704`), BNP Equity Premium Income (`4883494`), MSCI Emerging Markets IMI (`49598`), KRC Cat Bond (`4237216`), VanEck Dividenden Welt (`806442`). Entfernt: Euro Stoxx 50, FTSE All-World. Verworfen: VIX (bei L&S nicht verfügbar, keine Fremdquelle), EUR/USD und US-10Y (kein passender L&S-Proxy gefunden), Ethereum (noch nicht aufgenommen).
+Per Review vereinfacht auf 7 Einträge (IDs in Klammern): MSCI World ETF (`44039`, IE00B4L5Y983), Nasdaq-100 ETF (`42380`), Nikkei-225 ETF (`54395`), MSCI Emerging Markets IMI (`49598`), Gold-Spot (`70586`), Brent-Spot (`70577`), Bitcoin (`3477757`). Gespeicherte Listen bleiben unverändert erhalten; nur die Namen von Default-Instrumenten werden kuratiert (falls per Suche mit API-Rohname hinzugefügt). Verworfen: VIX (bei L&S nicht verfügbar, keine Fremdquelle), EUR/USD und US-10Y (kein passender L&S-Proxy gefunden), Ethereum (noch nicht aufgenommen).
 
 ### Darstellungsregeln für den Überblick
 
