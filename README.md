@@ -16,16 +16,16 @@ Chrome für Android unterstützt **keine** Erweiterungen — daher Firefox (oder
 
 **Variante A (empfohlen): Firefox + Tampermonkey**
 
-1. **Firefox für Android** aus dem Play Store installieren.
+1. **Firefox für Android** aus dem [Play Store](https://play.google.com/store/apps/details?id=org.mozilla.firefox) installieren.
 2. Menü (⋮) → **Add-ons** → **Add-ons entdecken** → nach **Tampermonkey** suchen → installieren.
 3. Tampermonkey-Symbol → **Dashboard** → **+** (neues Skript).
-4. Kompletten Inhalt von `ls-mobile-dashboard.user.js` einfügen → speichern (Disketten-Symbol), aktiviert lassen.
-5. `https://www.ls-tc.de/de/` öffnen, ggf. L&S-Disclaimer akzeptieren → Button **L&S Dashboard**.
+4. Kompletten Inhalt von [ls-mobile-dashboard.user.js](https://raw.githubusercontent.com/tobiasmelcher/ls-mobile-dashboard/main/ls-mobile-dashboard.user.js) einfügen → speichern (Disketten-Symbol), aktiviert lassen.
+5. [https://www.ls-tc.de/de/](https://www.ls-tc.de/de/) öffnen, ggf. L&S-Disclaimer akzeptieren → Button **L&S Dashboard**.
 
 **Variante B: Kiwi Browser + Tampermonkey**
 
 1. **Kiwi Browser** installieren (Chromium mit Erweiterungs-Support).
-2. `chrome.google.com/webstore` öffnen → **Tampermonkey** installieren.
+2. [Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) öffnen → **Tampermonkey** installieren.
 3. Weiter wie ab Schritt 3 oben.
 
 **Hinweise Android**
